@@ -34,12 +34,7 @@ const SDGCard = ({ target, onChange, isEnabled, onToggle }: SDGCardProps) => {
 
   return (
     <Card className={`relative ${isEnabled ? 'border-primary' : 'border-muted'}`}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute top-2 right-2"
-        onClick={onToggle}
-      >
+      <Button variant="ghost" size="sm" className="absolute top-2 right-2" onClick={onToggle}>
         <Check className={`h-4 w-4 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
       </Button>
       <CardContent className="pt-8 pb-4">
@@ -128,25 +123,24 @@ export default function SDGPage() {
   const recommendedTargets = getRecommendedTargets(selectedTags);
 
   const handleTargetToggle = (targetId: string) => {
-    setEnabledTargets(prev => {
-      const next = new Set(prev);
-      if (next.has(targetId)) {
-        next.delete(targetId);
-      } else {
-        next.add(targetId);
-      }
-      return next;
-    });
+    const nextEnabledTargets = new Set(enabledTargets);
+    if (nextEnabledTargets.has(targetId)) {
+      nextEnabledTargets.delete(targetId);
+    } else {
+      nextEnabledTargets.add(targetId);
+    }
+    setEnabledTargets(nextEnabledTargets);
   };
 
   const handleTargetChange = (
     targetId: string,
     updates: { impactType: string; impactDirection: string }
   ) => {
-    setTargetImpacts(prev => ({
-      ...prev,
-      [targetId]: updates
-    }));
+    const newTargetImpacts = {
+      ...targetImpacts,
+      [targetId]: updates,
+    };
+    setTargetImpacts(newTargetImpacts);
   };
 
   const handleSubmit = () => {
@@ -180,16 +174,10 @@ export default function SDGPage() {
           </div>
 
           <div className="flex justify-between items-center mt-8">
-            <Button
-              variant="outline"
-              onClick={() => router.back()}
-            >
+            <Button variant="outline" onClick={() => router.back()}>
               Back
             </Button>
-            <Button
-              onClick={handleSubmit}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
+            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
               Complete Assessment
             </Button>
           </div>
