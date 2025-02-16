@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAssessment } from "@/lib/assessment-context";
 import { getRecommendedTargets } from "@/lib/sdg-mapping";
 import { CheckCircle } from "lucide-react";
+import pool
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function SummaryPage() {
     targetImpacts,
     enabledTargets,
     isSubmitted,
-    setIsSubmitted
+    setIsSubmitted,
   } = useAssessment();
 
   useEffect(() => {
@@ -26,20 +27,42 @@ export default function SummaryPage() {
 
   const handleSubmit = async () => {
     try {
-      // Here you would typically send the data to your backend
       const assessmentData = {
         tags: selectedTags,
-        targets: Array.from(enabledTargets).map(targetId => ({
+        targets: Array.from(enabledTargets).map((targetId) => ({
           targetId,
-          ...targetImpacts[targetId]
-        }))
+          ...targetImpacts[targetId],
+        })),
       };
-      
+
       console.log("Submitting assessment data:", assessmentData);
-      
+
+      // Save data to the database
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const insertAssessmentText =
+          "INSERT INTO assessments(tags, targets) VALUES($1, $2) RETURNING id";
+        const insertAssessmentValues = [
+          assessmentData.tags,
+          JSON.stringify(assessmentData.targets),
+        ];
+        const res = await client.query(
+          insertAssessmentText,
+          insertAssessmentValues
+        );
+        await client.query("COMMIT");
+        console.log("Assessment saved with ID:", res.rows[0].id);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting assessment:", error);
@@ -55,9 +78,12 @@ export default function SummaryPage() {
             <div className="mb-4 flex justify-center">
               <CheckCircle className="w-16 h-16 text-green-500" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Assessment Submitted Successfully!</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              Assessment Submitted Successfully!
+            </h2>
             <p className="text-muted-foreground mb-6">
-              Your impact assessment has been recorded. Thank you for your contribution.
+              Your impact assessment has been recorded. Thank you for your
+              contribution.
             </p>
             <Button
               onClick={() => router.push("/")}
@@ -72,7 +98,7 @@ export default function SummaryPage() {
   }
 
   const recommendedTargets = getRecommendedTargets(selectedTags);
-  const selectedTargets = recommendedTargets.filter(target => 
+  const selectedTargets = recommendedTargets.filter((target) =>
     enabledTargets.has(target.id)
   );
 
@@ -80,7 +106,9 @@ export default function SummaryPage() {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Assessment Summary</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Assessment Summary
+          </CardTitle>
           <p className="text-muted-foreground mt-2">
             Review your selections before submitting
           </p>
@@ -89,7 +117,7 @@ export default function SummaryPage() {
           <div>
             <h3 className="text-lg font-semibold mb-2">Selected Tags</h3>
             <div className="flex flex-wrap gap-2">
-              {selectedTags.map(tag => (
+              {selectedTags.map((tag) => (
                 <span
                   key={tag}
                   className="px-3 py-1 bg-primary/10 rounded-full text-sm"
@@ -103,7 +131,7 @@ export default function SummaryPage() {
           <div>
             <h3 className="text-lg font-semibold mb-2">Selected SDG Targets</h3>
             <div className="space-y-4">
-              {selectedTargets.map(target => (
+              {selectedTargets.map((target) => (
                 <Card key={target.id} className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -111,13 +139,18 @@ export default function SummaryPage() {
                     </div>
                     <div>
                       <h4 className="font-medium">{target.title}</h4>
-                      <p className="text-sm text-muted-foreground">{target.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {target.description}
+                      </p>
                       <div className="mt-2 text-sm">
                         <span className="mr-4">
-                          Impact: {targetImpacts[target.id]?.impactType || "positive"}
+                          Impact:{" "}
+                          {targetImpacts[target.id]?.impactType || "positive"}
                         </span>
                         <span>
-                          Direction: {targetImpacts[target.id]?.impactDirection || "direct"}
+                          Direction:{" "}
+                          {targetImpacts[target.id]?.impactDirection ||
+                            "direct"}
                         </span>
                       </div>
                     </div>
@@ -128,10 +161,7 @@ export default function SummaryPage() {
           </div>
 
           <div className="flex justify-between items-center pt-6">
-            <Button
-              variant="outline"
-              onClick={() => router.back()}
-            >
+            <Button variant="outline" onClick={() => router.back()}>
               Back
             </Button>
             <Button
