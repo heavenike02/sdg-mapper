@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,74 +21,91 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 
+// Define SDG options for the dropdown
+const sdgOptions = [
+  "No Poverty",
+  "Zero Hunger",
+  "Good Health and Well-being",
+  "Quality Education",
+  "Gender Equality",
+  "Clean Water and Sanitation",
+  "Affordable and Clean Energy",
+  "Decent Work and Economic Growth",
+  "Industry, Innovation, and Infrastructure",
+  "Reduced Inequalities",
+  "Sustainable Cities and Communities",
+  "Responsible Consumption and Production",
+  "Climate Action",
+  "Life Below Water",
+  "Life on Land",
+  "Peace, Justice and Strong Institutions",
+  "Partnerships for the Goals",
+];
+
+// Title options for the formal title field
+const titleOptions = ["Professor", "Lecturer", "Dr.", "Other"];
+
+// Cleaned Zod schema with only the used fields
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  assessmentName: z.string().min(5, "Assessment name must be at least 5 characters"),
-  projectOwner: z.string().min(2, "Project owner must be at least 2 characters"),
-  ownerType: z.string(),
-  overview: z.string().min(20, "Overview must be at least 20 characters"),
+  email: z.string().email("Invalid email address"),
+  university: z.string().min(2, "University must be at least 2 characters"),
+  universitySchool: z
+    .string()
+    .min(2, "University school must be at least 2 characters"),
+  title: z.string().min(2, "Title is required"),
   objectives: z.string().min(20, "Objectives must be at least 20 characters"),
-  status: z.string(),
-  location: z.string().min(2, "Location must be at least 2 characters"),
-  tcGroup: z.string(),
+  // Field for listing modules and their SDG focus
+  modules: z
+    .array(
+      z.object({
+        moduleName: z.string().min(2, "Module name must be at least 2 characters"),
+        sdg: z.string().min(1, "SDG selection is required"),
+      })
+    )
+    .optional(),
+  // File upload for profile picture (processing to be implemented as needed)
+  profilePicture: z.any().optional(),
+  // Publications link (ORCID/Google Scholar) with URL validation
+  publications: z.string().url("Must be a valid URL").optional(),
 });
 
-const ownerTypes = [
-  "Individual",
-  "Organization",
-  "Government",
-  "NGO",
-  "Corporation",
-  "Other",
-];
-
-const statusOptions = [
-  "Planning",
-  "In Progress",
-  "Completed",
-  "On Hold",
-  "Cancelled",
-];
-
-const tcGroups = [
-  "Group 1",
-  "Group 2",
-  "Group 3",
-  "Group 4",
-  "Group 5",
-  "Group 6",
-  "Group 7",
-  "Group 8",
-  "Group 9",
-  "Group 10",
-  "Group 11",
-  "Group 12",
-  "Group 13",
-];
+type FormValues = z.infer<typeof formSchema>;
 
 export default function AssessmentForm() {
   const router = useRouter();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
-      assessmentName: "",
-      projectOwner: "",
-      ownerType: "",
-      overview: "",
+      email: "",
+      university: "",
+      universitySchool: "",
+      title: "",
       objectives: "",
-      status: "",
-      location: "",
-      tcGroup: "",
+      modules: [],
+      profilePicture: undefined,
+      publications: undefined,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  // Use field array for dynamic module/SDG entries
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "modules",
+  });
+
+  function onSubmit(values: FormValues) {
     console.log(values);
     router.push("/assessment/tags");
   }
@@ -97,11 +114,14 @@ export default function AssessmentForm() {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Project Assessment Details</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">
+            Project Assessment Details
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Personal Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -131,14 +151,15 @@ export default function AssessmentForm() {
                 />
               </div>
 
+              {/* Contact & University Info */}
               <FormField
                 control={form.control}
-                name="assessmentName"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assessment Name</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Project Impact Assessment 2024" {...field} />
+                      <Input placeholder="john.doe@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,62 +169,59 @@ export default function AssessmentForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="projectOwner"
+                  name="university"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Owner</FormLabel>
+                      <FormLabel>University</FormLabel>
                       <FormControl>
-                        <Input placeholder="Project Owner Name" {...field} />
+                        <Input placeholder="University Name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
-                  name="ownerType"
+                  name="universitySchool"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Owner Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select owner type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {ownerTypes.map((type) => (
-                            <SelectItem key={type} value={type.toLowerCase()}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>University School</FormLabel>
+                      <FormControl>
+                        <Input placeholder="School/Department" {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
+              {/* Formal Title */}
               <FormField
                 control={form.control}
-                name="overview"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Assessment Overview</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Provide a brief overview of the assessment..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Title</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Title" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {titleOptions.map((option) => (
+                          <SelectItem key={option} value={option.toLowerCase()}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Aims and Objectives */}
               <FormField
                 control={form.control}
                 name="objectives"
@@ -222,72 +240,103 @@ export default function AssessmentForm() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {statusOptions.map((status) => (
-                            <SelectItem key={status} value={status.toLowerCase()}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Project location" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tcGroup"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>TC Group</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select TC group" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {tcGroups.map((group) => (
-                            <SelectItem key={group} value={group.toLowerCase()}>
-                              {group}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Modules and SDGs Section */}
+              <div>
+                <FormLabel className="mb-2 block">Current Modules</FormLabel>
+                {fields.map((moduleField, index) => (
+                  <div
+                    key={moduleField.id}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end"
+                  >
+                    <FormField
+                      control={form.control}
+                      name={`modules.${index}.moduleName` as const}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Module Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Module Name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`modules.${index}.sdg` as const}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SDG Focus</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select SDG" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {sdgOptions.map((sdg) => (
+                                <SelectItem key={sdg} value={sdg}>
+                                  {sdg}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      variant="destructive"
+                      onClick={() => remove(index)}
+                      className="mt-2"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  onClick={() => append({ moduleName: "", sdg: "" })}
+                >
+                  Add Module
+                </Button>
               </div>
 
+              {/* Profile Picture Upload */}
+              <FormField
+                control={form.control}
+                name="profilePicture"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile Picture</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => field.onChange(e.target.files?.[0])}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Publications Link */}
+              <FormField
+                control={form.control}
+                name="publications"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Publications (ORCID/Google Scholar)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://orcid.org/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit Button */}
               <div className="flex justify-end space-x-4">
                 <Button type="submit" size="lg">
                   Continue to Tags

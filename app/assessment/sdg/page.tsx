@@ -38,15 +38,16 @@ const SDGCard = ({ target, onChange, isEnabled, onToggle }: SDGCardProps) => {
         <Check className={`h-4 w-4 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
       </Button>
       <CardContent className="pt-8 pb-4">
-        <div className="flex gap-4">
-          <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-            <span className="text-xl font-bold">{target.id}</span>
-          </div>
-          <div>
-            <h3 className="font-semibold">{target.title}</h3>
-            <p className="text-sm text-muted-foreground">{target.description}</p>
-          </div>
-        </div>
+  <div className="flex gap-4 items-center">
+    {/* Fixed square size for target.id */}
+    <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center">
+      <span className="text-xl font-bold">{target.id}</span>
+    </div>
+    <div className="flex-1">
+      <h3 className="font-semibold">{target.title}</h3>
+      <p className="text-sm text-muted-foreground">{target.description}</p>
+    </div>
+  </div>
 
         <div className="mt-4 space-y-4">
           <div>

@@ -13,7 +13,7 @@ export default function Home() {
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
             <Heart className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Lovable Impact Assessment</CardTitle>
+          <CardTitle className="text-3xl font-bold"> SDG Assessment</CardTitle>
           <p className="text-muted-foreground">
             Align your projects with Sustainable Development Goals and measure their impact
           </p>
