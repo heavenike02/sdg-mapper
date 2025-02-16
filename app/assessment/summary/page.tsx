@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAssessment } from "@/lib/assessment-context";
 import { getRecommendedTargets } from "@/lib/sdg-mapping";
 import { CheckCircle } from "lucide-react";
-import pool
+import pool from "@/app/data/db";
 
 export default function SummaryPage() {
   const router = useRouter();
