@@ -21,12 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 
 // Define SDG options for the dropdown
@@ -68,7 +63,9 @@ const formSchema = z.object({
   modules: z
     .array(
       z.object({
-        moduleName: z.string().min(2, "Module name must be at least 2 characters"),
+        moduleName: z
+          .string()
+          .min(2, "Module name must be at least 2 characters"),
         sdg: z.string().min(1, "SDG selection is required"),
       })
     )
@@ -107,7 +104,11 @@ export default function AssessmentForm() {
 
   function onSubmit(values: FormValues) {
     console.log(values);
-    router.push("/assessment/tags");
+    // Pass form data to the tags page instead of summary
+    const query = new URLSearchParams({
+      formData: JSON.stringify(values),
+    }).toString();
+    router.push(`/assessment/tags?${query}`); // Updated to navigate to tags page
   }
 
   return (
@@ -202,7 +203,10 @@ export default function AssessmentForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Title</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Title" />
@@ -267,7 +271,10 @@ export default function AssessmentForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>SDG Focus</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select SDG" />

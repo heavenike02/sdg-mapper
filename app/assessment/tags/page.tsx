@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   groups,
@@ -64,6 +64,8 @@ const TagSection = ({
 
 export default function TagsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const formData = searchParams.get("formData") || "";
   const { selectedTags, setSelectedTags } = useAssessment();
 
   const handleTagToggle = (tagId: string) => {
@@ -79,7 +81,7 @@ export default function TagsPage() {
       alert("Please select at least one tag");
       return;
     }
-    router.push("/assessment/sdg");
+    router.push(`/assessment/sdg?formData=${encodeURIComponent(formData)}`);
   };
 
   // Create an array of all tag sections you want to display
@@ -92,7 +94,10 @@ export default function TagsPage() {
     { title: "Environment", tags: environmentTags },
     { title: "Prosperity", tags: prosperityTags },
     { title: "Food / Nutrition / Hunger", tags: foodNutritionHungerTags },
-    { title: "Science, Technology & Innovation", tags: scienceTechnologyInnovationTags },
+    {
+      title: "Science, Technology & Innovation",
+      tags: scienceTechnologyInnovationTags,
+    },
     { title: "Tourism & Culture", tags: tourismCultureTags },
     { title: "Water, Sanitation & Hygiene", tags: waterSanitationHygieneTags },
     { title: "Health & Well Being", tags: healthWellBeingTags },
@@ -113,7 +118,8 @@ export default function TagsPage() {
             Select Impact Tags
           </CardTitle>
           <p className="text-muted-foreground mt-2">
-            Choose tags that best describe your project&apos;s focus areas and impact
+            Choose tags that best describe your project&apos;s focus areas and
+            impact
           </p>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -126,7 +132,9 @@ export default function TagsPage() {
                 onTagToggle={handleTagToggle}
               />
               {/* Add a separator between sections, except after the last one */}
-              {index !== tagSections.length - 1 && <Separator className="mb-2 mt-2"/>}
+              {index !== tagSections.length - 1 && (
+                <Separator className="mb-2 mt-2" />
+              )}
             </div>
           ))}
 

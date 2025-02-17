@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Check, ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SDGTarget, getRecommendedTargets } from "@/lib/sdg-mapping";
 import { useAssessment } from "@/lib/assessment-context";
 
 interface SDGCardProps {
   target: SDGTarget;
-  onChange: (targetId: string, updates: { impactType: string; impactDirection: string }) => void;
+  onChange: (
+    targetId: string,
+    updates: { impactType: string; impactDirection: string }
+  ) => void;
   isEnabled: boolean;
   onToggle: () => void;
 }
@@ -33,21 +40,34 @@ const SDGCard = ({ target, onChange, isEnabled, onToggle }: SDGCardProps) => {
   };
 
   return (
-    <Card className={`relative ${isEnabled ? 'border-primary' : 'border-muted'}`}>
-      <Button variant="ghost" size="sm" className="absolute top-2 right-2" onClick={onToggle}>
-        <Check className={`h-4 w-4 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+    <Card
+      className={`relative ${isEnabled ? "border-primary" : "border-muted"}`}
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-2 right-2"
+        onClick={onToggle}
+      >
+        <Check
+          className={`h-4 w-4 ${
+            isEnabled ? "text-primary" : "text-muted-foreground"
+          }`}
+        />
       </Button>
       <CardContent className="pt-8 pb-4">
-  <div className="flex gap-4 items-center">
-    {/* Fixed square size for target.id */}
-    <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center">
-      <span className="text-xl font-bold">{target.id}</span>
-    </div>
-    <div className="flex-1">
-      <h3 className="font-semibold">{target.title}</h3>
-      <p className="text-sm text-muted-foreground">{target.description}</p>
-    </div>
-  </div>
+        <div className="flex gap-4 items-center">
+          {/* Fixed square size for target.id */}
+          <div className="w-20 h-20 bg-primary/10 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold">{target.id}</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold">{target.title}</h3>
+            <p className="text-sm text-muted-foreground">
+              {target.description}
+            </p>
+          </div>
+        </div>
 
         <div className="mt-4 space-y-4">
           <div>
@@ -107,6 +127,9 @@ const SDGCard = ({ target, onChange, isEnabled, onToggle }: SDGCardProps) => {
 
 export default function SDGPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const formData = searchParams.get("formData") || "";
+
   const {
     selectedTags,
     targetImpacts,
@@ -149,21 +172,24 @@ export default function SDGPage() {
       alert("Please select at least one SDG target");
       return;
     }
-    router.push("/assessment/summary");
+    router.push(`/assessment/summary?formData=${encodeURIComponent(formData)}`);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted p-4">
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">SDG Target Mapping</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            SDG Target Mapping
+          </CardTitle>
           <p className="text-muted-foreground mt-2">
-            Review recommended SDG targets based on your selected tags and specify their impacts
+            Review recommended SDG targets based on your selected tags and
+            specify their impacts
           </p>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">
-            {recommendedTargets.map(target => (
+            {recommendedTargets.map((target) => (
               <SDGCard
                 key={target.id}
                 target={target}
@@ -178,7 +204,10 @@ export default function SDGPage() {
             <Button variant="outline" onClick={() => router.back()}>
               Back
             </Button>
-            <Button onClick={handleSubmit} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              onClick={handleSubmit}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Complete Assessment
             </Button>
           </div>

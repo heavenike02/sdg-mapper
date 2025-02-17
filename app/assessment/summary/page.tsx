@@ -3,14 +3,17 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAssessment } from "@/lib/assessment-context";
 import { getRecommendedTargets } from "@/lib/sdg-mapping";
 import { CheckCircle } from "lucide-react";
-import pool from "@/app/data/db";
+import { saveAssessment } from "@/actions/data"; // Import the server action
 
 export default function SummaryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const formData = JSON.parse(searchParams.get("formData") || "{}");
+
   const {
     selectedTags,
     targetImpacts,
@@ -28,40 +31,31 @@ export default function SummaryPage() {
   const handleSubmit = async () => {
     try {
       const assessmentData = {
+        ...formData,
         tags: selectedTags,
         targets: Array.from(enabledTargets).map((targetId) => ({
           targetId,
           ...targetImpacts[targetId],
         })),
+        // Add additional fields required by saveAssessment
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        university: formData.university,
+        universitySchool: formData.universitySchool,
+        title: formData.title,
+        objectives: formData.objectives,
+        modules: formData.modules,
+        profilePicture: formData.profilePicture,
+        publications: formData.publications,
       };
 
       console.log("Submitting assessment data:", assessmentData);
 
-      // Save data to the database
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        const insertAssessmentText =
-          "INSERT INTO assessments(tags, targets) VALUES($1, $2) RETURNING id";
-        const insertAssessmentValues = [
-          assessmentData.tags,
-          JSON.stringify(assessmentData.targets),
-        ];
-        const res = await client.query(
-          insertAssessmentText,
-          insertAssessmentValues
-        );
-        await client.query("COMMIT");
-        console.log("Assessment saved with ID:", res.rows[0].id);
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
-      } finally {
-        client.release();
-      }
+      // Call the server action directly
+      const { id: assessmentId } = await saveAssessment(assessmentData);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Assessment saved with ID:", assessmentId);
 
       setIsSubmitted(true);
     } catch (error) {
