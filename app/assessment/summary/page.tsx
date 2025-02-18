@@ -7,12 +7,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAssessment } from "@/lib/assessment-context";
 import { getRecommendedTargets } from "@/lib/sdg-mapping";
 import { CheckCircle } from "lucide-react";
-import { saveAssessment } from "@/actions/data"; // Import the server action
+
 
 export default function SummaryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const formData = JSON.parse(searchParams.get("formData") || "{}");
+  const formData = JSON.parse(searchParams?.get("formData") || "{}");
 
   const {
     selectedTags,
@@ -46,17 +46,26 @@ export default function SummaryPage() {
         title: formData.title,
         objectives: formData.objectives,
         modules: formData.modules,
-        profilePicture: formData.profilePicture,
+       
         publications: formData.publications,
       };
 
       console.log("Submitting assessment data:", assessmentData);
 
-      // Call the server action directly
-      const { id: assessmentId } = await saveAssessment(assessmentData);
+      const response = await fetch('/api/saveAssessment', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(assessmentData),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to save assessment");
+      }
+
+      const { id: assessmentId } = await response.json();
       console.log("Assessment saved with ID:", assessmentId);
-
       setIsSubmitted(true);
     } catch (error) {
       console.error("Error submitting assessment:", error);

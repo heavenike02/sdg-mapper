@@ -65,7 +65,7 @@ const TagSection = ({
 export default function TagsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const formData = searchParams.get("formData") || "";
+  const formData = searchParams?.get("formData") || "";
   const { selectedTags, setSelectedTags } = useAssessment();
 
   const handleTagToggle = (tagId: string) => {

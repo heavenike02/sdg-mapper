@@ -128,7 +128,7 @@ const SDGCard = ({ target, onChange, isEnabled, onToggle }: SDGCardProps) => {
 export default function SDGPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const formData = searchParams.get("formData") || "";
+  const formData = searchParams?.get("formData") || "";
 
   const {
     selectedTags,

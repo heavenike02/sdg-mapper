@@ -71,7 +71,7 @@ const formSchema = z.object({
     )
     .optional(),
   // File upload for profile picture (processing to be implemented as needed)
-  profilePicture: z.any().optional(),
+  
   // Publications link (ORCID/Google Scholar) with URL validation
   publications: z.string().url("Must be a valid URL").optional(),
 });
@@ -91,7 +91,7 @@ export default function AssessmentForm() {
       title: "",
       objectives: "",
       modules: [],
-      profilePicture: undefined,
+
       publications: undefined,
     },
   });
@@ -309,24 +309,7 @@ export default function AssessmentForm() {
                 </Button>
               </div>
 
-              {/* Profile Picture Upload */}
-              <FormField
-                control={form.control}
-                name="profilePicture"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profile Picture</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => field.onChange(e.target.files?.[0])}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
 
               {/* Publications Link */}
               <FormField

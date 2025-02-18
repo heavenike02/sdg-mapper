@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 import { neon } from "@neondatabase/serverless";
 
 
@@ -14,7 +14,7 @@ export async function saveAssessment(assessmentData: {
   title: string;
   objectives: string;
   modules: { moduleName: string; sdg: string }[];
-  profilePicture?: any;
+ 
   publications?: string;
 }) {
 
@@ -38,7 +38,7 @@ if (!databaseUrl) {
       title,
       objectives,
       modules,
-      profile_picture,
+    
       publications
     )
     VALUES (
@@ -52,7 +52,7 @@ if (!databaseUrl) {
       ${assessmentData.title},
       ${assessmentData.objectives},
       ${JSON.stringify(assessmentData.modules)},
-      ${assessmentData.profilePicture},
+    
       ${assessmentData.publications}
     )
     RETURNING id;
