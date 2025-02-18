@@ -231,7 +231,7 @@ export default function AssessmentForm() {
                 name="objectives"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Aims and Objectives</FormLabel>
+                    <FormLabel>About Me</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="List the main aims and objectives..."
