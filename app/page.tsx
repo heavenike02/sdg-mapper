@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 export default function Home() {
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
@@ -51,9 +55,37 @@ export default function Home() {
               </CardHeader>
             </Card>
           </div>
-          <div className="flex justify-center mt-6">
-            <Link href="/assessment">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <div className="flex flex-col items-center gap-4 mt-6">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={termsAccepted}
+                onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+              />
+              <div className="flex items-center">
+                <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
+                  I agree to the 
+                </label>
+                <Link 
+                  href="/terms-of-service" 
+                  className="text-sm text-primary hover:underline ml-1"
+                  target="_blank"
+                >
+                  Terms of Service
+                </Link>
+                
+              </div>
+            </div>
+            <Link 
+              href={termsAccepted ? "/assessment" : "#"}
+              onClick={(e) => !termsAccepted && e.preventDefault()}
+              className={!termsAccepted ? "pointer-events-none" : ""}
+            >
+              <Button 
+                size="lg" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={!termsAccepted}
+              >
                 Start Assessment
               </Button>
             </Link>
