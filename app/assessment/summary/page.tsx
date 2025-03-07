@@ -46,7 +46,6 @@ export default function SummaryPage() {
         title: formData.title,
         objectives: formData.objectives,
         modules: formData.modules,
-       
         publications: formData.publications,
       };
 
@@ -113,10 +112,113 @@ export default function SummaryPage() {
             Assessment Summary
           </CardTitle>
           <p className="text-muted-foreground mt-2">
-            Review your selections before submitting
+            Review your information before submitting
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Personal Information */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium">{formData.firstName} {formData.lastName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{formData.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">University</p>
+                <p className="font-medium">{formData.university}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Department/School</p>
+                <p className="font-medium">{formData.universitySchool}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Title</p>
+                <p className="font-medium">{formData.title}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Research Objectives */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Research & Objectives</h3>
+            <p className="whitespace-pre-wrap">{formData.objectives}</p>
+          </div>
+          
+          {/* Modules */}
+          {formData.modules && formData.modules.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Teaching Modules</h3>
+              <div className="space-y-4">
+                {formData.modules.map((module: {
+                  moduleCode: string;
+                  moduleName: string;
+                  moduleDescription: string;
+                  sdgAlignments: {
+                    sdg: string;
+                    alignment: string;
+                  }[]
+                }, index: number) => (
+                  <Card key={index} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex flex-col md:flex-row md:justify-between">
+                        <div className="font-medium text-lg">{module.moduleName}</div>
+                        <div className="text-sm text-muted-foreground">Code: {module.moduleCode}</div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Description</p>
+                        <p>{module.moduleDescription}</p>
+                      </div>
+                      {module.sdgAlignments && module.sdgAlignments.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mt-2">SDG Alignments</p>
+                          <div className="space-y-2 mt-1">
+                            {module.sdgAlignments.map((alignment: { sdg: string; alignment: string }, idx: number) => (
+                              <div key={idx} className="border rounded-lg p-3">
+                                <p className="font-medium">{alignment.sdg}</p>
+                                <p className="text-sm mt-1">{alignment.alignment}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Publications */}
+          {formData.publications && formData.publications.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Publications</h3>
+              <div className="space-y-2">
+                {formData.publications.map((pub: {
+                  url: string;
+                  description?: string;
+                  sdgNumber: string;
+                }, index: number) => (
+                  <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
+                    <div className="flex-grow">
+                      <a href={pub.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {pub.description || pub.url}
+                      </a>
+                    </div>
+                    <div className="text-sm bg-primary/10 px-2 py-1 rounded-full">
+                      SDG {pub.sdgNumber}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Selected Tags */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Selected Tags</h3>
             <div className="flex flex-wrap gap-2">
@@ -131,6 +233,7 @@ export default function SummaryPage() {
             </div>
           </div>
 
+          {/* Selected SDG Targets */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Selected SDG Targets</h3>
             <div className="space-y-4">

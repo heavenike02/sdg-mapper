@@ -1,8 +1,6 @@
 import "server-only";
 import { neon } from "@neondatabase/serverless";
 
-
-
 export async function saveAssessment(assessmentData: {
   tags: string[];
   targets: any[];
@@ -13,9 +11,20 @@ export async function saveAssessment(assessmentData: {
   universitySchool: string;
   title: string;
   objectives: string;
-  modules: { moduleName: string; sdg: string }[];
- 
-  publications?: string;
+  modules: {
+    moduleCode: string;
+    moduleName: string;
+    moduleDescription: string;
+    sdgAlignments: {
+      sdg: string;
+      alignment: string;
+    }[];
+  }[];
+  publications: {
+    url: string;
+    description?: string;
+    sdgNumber: string;
+  }[];
 }) {
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -38,7 +47,6 @@ if (!databaseUrl) {
       title,
       objectives,
       modules,
-    
       publications
     )
     VALUES (
@@ -52,8 +60,7 @@ if (!databaseUrl) {
       ${assessmentData.title},
       ${assessmentData.objectives},
       ${JSON.stringify(assessmentData.modules)},
-    
-      ${assessmentData.publications}
+      ${JSON.stringify(assessmentData.publications)}
     )
     RETURNING id;
   `;

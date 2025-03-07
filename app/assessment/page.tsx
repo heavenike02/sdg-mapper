@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 // Define SDG options for the dropdown
 const sdgOptions = [
@@ -46,7 +49,16 @@ const sdgOptions = [
 ];
 
 // Title options for the formal title field
-const titleOptions = ["Professor", "Lecturer", "Dr.", "Other"];
+const titleOptions = [
+  "Professor", 
+  "Associate Professor", 
+  "Assistant Professor", 
+  "Lecturer", 
+  "Postdoctoral Researcher", 
+  "PhD Candidate", 
+  "Dr.", 
+  "Other"
+];
 
 // Cleaned Zod schema with only the used fields
 const formSchema = z.object({
@@ -63,23 +75,49 @@ const formSchema = z.object({
   modules: z
     .array(
       z.object({
+        moduleCode: z
+          .string()
+          .min(2, "Module code must be at least 2 characters"),
         moduleName: z
           .string()
           .min(2, "Module name must be at least 2 characters"),
-        sdg: z.string().min(1, "SDG selection is required"),
+        moduleDescription: z
+          .string()
+          .min(10, "Module description must be at least 10 characters"),
+        sdgAlignments: z.array(
+          z.object({
+            sdg: z.string().min(1, "SDG selection is required"),
+            alignment: z.string().min(10, "Alignment description is required"),
+          })
+        ).min(1, "At least one SDG alignment is required"),
       })
     )
     .optional(),
-  // File upload for profile picture (processing to be implemented as needed)
   
-  // Publications link (ORCID/Google Scholar) with URL validation
-  publications: z.string().url("Must be a valid URL").optional(),
+  // Publications links (ORCID/Google Scholar) with URL validation
+  publications: z.array(
+    z.object({
+      url: z.string().url("Must be a valid URL"),
+      description: z.string().optional(),
+      sdgNumber: z.string().regex(/^\d+(\.\d+)?$/, "Must be a valid SDG number"),
+    })
+  ).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function AssessmentForm() {
   const router = useRouter();
+  const [openPopover, setOpenPopover] = useState<string | null>(null);
+
+  const handlePopoverOpen = (id: string) => {
+    setOpenPopover(id);
+  };
+
+  const handlePopoverClose = () => {
+    setOpenPopover(null);
+  };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -91,15 +129,20 @@ export default function AssessmentForm() {
       title: "",
       objectives: "",
       modules: [],
-
-      publications: undefined,
+      publications: [],
     },
   });
 
   // Use field array for dynamic module/SDG entries
-  const { fields, append, remove } = useFieldArray({
+  const { fields: moduleFields, append: appendModule, remove: removeModule } = useFieldArray({
     control: form.control,
     name: "modules",
+  });
+
+  // Use field array for publications
+  const { fields: publicationFields, append: appendPublication, remove: removePublication } = useFieldArray({
+    control: form.control,
+    name: "publications",
   });
 
   function onSubmit(values: FormValues) {
@@ -116,7 +159,7 @@ export default function AssessmentForm() {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
-            Project Assessment Details
+            Faculty Profile Submission
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -129,7 +172,25 @@ export default function AssessmentForm() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Your First Name</FormLabel>
+                        <Popover open={openPopover === 'firstName'}>
+                          <PopoverTrigger asChild>
+                            <HelpCircle 
+                              className="h-4 w-4 cursor-pointer text-muted-foreground"
+                              onMouseEnter={() => handlePopoverOpen('firstName')}
+                              onMouseLeave={handlePopoverClose}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent 
+                            className="w-80"
+                            onMouseEnter={() => handlePopoverOpen('firstName')}
+                            onMouseLeave={handlePopoverClose}
+                          >
+                            <p>Enter your full legal name as you'd like it to appear on your profile.</p>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormControl>
                         <Input placeholder="John" {...field} />
                       </FormControl>
@@ -142,7 +203,25 @@ export default function AssessmentForm() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Your Last Name</FormLabel>
+                        <Popover open={openPopover === 'lastName'}>
+                          <PopoverTrigger asChild>
+                            <HelpCircle 
+                              className="h-4 w-4 cursor-pointer text-muted-foreground"
+                              onMouseEnter={() => handlePopoverOpen('lastName')}
+                              onMouseLeave={handlePopoverClose}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent 
+                            className="w-80"
+                            onMouseEnter={() => handlePopoverOpen('lastName')}
+                            onMouseLeave={handlePopoverClose}
+                          >
+                            <p>Enter your last name as you'd like it to appear on your profile.</p>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormControl>
                         <Input placeholder="Doe" {...field} />
                       </FormControl>
@@ -158,7 +237,25 @@ export default function AssessmentForm() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Your Contact Email</FormLabel>
+                      <Popover open={openPopover === 'email'}>
+                        <PopoverTrigger asChild>
+                          <HelpCircle 
+                            className="h-4 w-4 cursor-pointer text-muted-foreground"
+                            onMouseEnter={() => handlePopoverOpen('email')}
+                            onMouseLeave={handlePopoverClose}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          className="w-80"
+                          onMouseEnter={() => handlePopoverOpen('email')}
+                          onMouseLeave={handlePopoverClose}
+                        >
+                          <p>Enter the email address where you can be contacted regarding academic matters.</p>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <FormControl>
                       <Input placeholder="john.doe@example.com" {...field} />
                     </FormControl>
@@ -173,7 +270,25 @@ export default function AssessmentForm() {
                   name="university"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>University</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Affiliated University</FormLabel>
+                        <Popover open={openPopover === 'university'}>
+                          <PopoverTrigger asChild>
+                            <HelpCircle 
+                              className="h-4 w-4 cursor-pointer text-muted-foreground"
+                              onMouseEnter={() => handlePopoverOpen('university')}
+                              onMouseLeave={handlePopoverClose}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent 
+                            className="w-80"
+                            onMouseEnter={() => handlePopoverOpen('university')}
+                            onMouseLeave={handlePopoverClose}
+                          >
+                            <p>Specify the university you are affiliated with.</p>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormControl>
                         <Input placeholder="University Name" {...field} />
                       </FormControl>
@@ -186,7 +301,25 @@ export default function AssessmentForm() {
                   name="universitySchool"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>University School</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Department/School</FormLabel>
+                        <Popover open={openPopover === 'universitySchool'}>
+                          <PopoverTrigger asChild>
+                            <HelpCircle 
+                              className="h-4 w-4 cursor-pointer text-muted-foreground"
+                              onMouseEnter={() => handlePopoverOpen('universitySchool')}
+                              onMouseLeave={handlePopoverClose}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent 
+                            className="w-80"
+                            onMouseEnter={() => handlePopoverOpen('universitySchool')}
+                            onMouseLeave={handlePopoverClose}
+                          >
+                            <p>Enter the department or faculty you belong to.</p>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <FormControl>
                         <Input placeholder="School/Department" {...field} />
                       </FormControl>
@@ -202,7 +335,25 @@ export default function AssessmentForm() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Academic/Professional Title</FormLabel>
+                      <Popover open={openPopover === 'title'}>
+                        <PopoverTrigger asChild>
+                          <HelpCircle 
+                            className="h-4 w-4 cursor-pointer text-muted-foreground"
+                            onMouseEnter={() => handlePopoverOpen('title')}
+                            onMouseLeave={handlePopoverClose}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          className="w-80"
+                          onMouseEnter={() => handlePopoverOpen('title')}
+                          onMouseLeave={handlePopoverClose}
+                        >
+                          <p>Select your current academic or professional title (e.g., Lecturer, Professor, Researcher).</p>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -231,10 +382,28 @@ export default function AssessmentForm() {
                 name="objectives"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>About Me</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Summary of Research & Objectives</FormLabel>
+                      <Popover open={openPopover === 'objectives'}>
+                        <PopoverTrigger asChild>
+                          <HelpCircle 
+                            className="h-4 w-4 cursor-pointer text-muted-foreground"
+                            onMouseEnter={() => handlePopoverOpen('objectives')}
+                            onMouseLeave={handlePopoverClose}
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent 
+                          className="w-80"
+                          onMouseEnter={() => handlePopoverOpen('objectives')}
+                          onMouseLeave={handlePopoverClose}
+                        >
+                          <p>Provide a short summary of your research focus, academic contributions, and objectives.</p>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <FormControl>
                       <Textarea
-                        placeholder="List the main aims and objectives..."
+                        placeholder="Describe your research interests, focus areas, and academic objectives..."
                         className="min-h-[100px]"
                         {...field}
                       />
@@ -245,91 +414,273 @@ export default function AssessmentForm() {
               />
 
               {/* Modules and SDGs Section */}
-              <div>
-                <FormLabel className="mb-2 block">Current Modules</FormLabel>
-                {fields.map((moduleField, index) => (
-                  <div
-                    key={moduleField.id}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end"
-                  >
+              <div className="border rounded-lg p-6 mb-6">
+                <h3 className="text-lg font-semibold mb-2">Module Details</h3>
+                <p className="text-sm text-muted-foreground mb-4">Enter the basic information about your university module</p>
+                
+                {moduleFields.map((moduleField, moduleIndex) => (
+                  <div key={moduleField.id} className="mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium">Module {moduleIndex + 1}</h4>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeModule(moduleIndex)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                      <FormField
+                        control={form.control}
+                        name={`modules.${moduleIndex}.moduleCode`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Module Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., BUS101" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name={`modules.${moduleIndex}.moduleName`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Module Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Introduction to Sustainable Business" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <FormField
                       control={form.control}
-                      name={`modules.${index}.moduleName` as const}
+                      name={`modules.${moduleIndex}.moduleDescription`}
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Module Name</FormLabel>
+                        <FormItem className="mb-6">
+                          <FormLabel>Module Description</FormLabel>
                           <FormControl>
-                            <Input placeholder="Module Name" {...field} />
+                            <Textarea 
+                              placeholder="Briefly describe the module content and learning objectives..." 
+                              className="min-h-[100px]"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name={`modules.${index}.sdg` as const}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>SDG Focus</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select SDG" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {sdgOptions.map((sdg) => (
-                                <SelectItem key={sdg} value={sdg}>
-                                  {sdg}
-                                </SelectItem>
+                    
+                    <div className="border rounded-lg p-4 mt-4">
+                      <h4 className="font-medium mb-2">SDG Alignments</h4>
+                      <p className="text-sm text-muted-foreground mb-4">Indicate which Sustainable Development Goals your module addresses and how</p>
+                      
+                      {/* Use a nested field array for SDG alignments */}
+                      <FormField
+                        control={form.control}
+                        name={`modules.${moduleIndex}.sdgAlignments`}
+                        render={({ field }) => {
+                          // Create a nested field array for SDG alignments
+                          const { fields: sdgFields, append: appendSdg, remove: removeSdg } = useFieldArray({
+                            control: form.control,
+                            name: `modules.${moduleIndex}.sdgAlignments`,
+                          });
+                          
+                          return (
+                            <div>
+                              {sdgFields.map((sdgField, sdgIndex) => (
+                                <div key={sdgField.id} className="border rounded-lg p-4 mb-4">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <h5 className="font-medium">Sustainable Development Goal</h5>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeSdg(sdgIndex)}
+                                    >
+                                      <span className="sr-only">Remove</span>
+                                      <span className="h-4 w-4">×</span>
+                                    </Button>
+                                  </div>
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name={`modules.${moduleIndex}.sdgAlignments.${sdgIndex}.sdg`}
+                                    render={({ field }) => (
+                                      <FormItem className="mb-4">
+                                        <Select
+                                          onValueChange={field.onChange}
+                                          defaultValue={field.value}
+                                        >
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Select an SDG" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            {sdgOptions.map((sdg, idx) => (
+                                              <SelectItem key={sdg} value={sdg}>
+                                                {`${idx + 1}. ${sdg}`}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name={`modules.${moduleIndex}.sdgAlignments.${sdgIndex}.alignment`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>How does your module align with this SDG?</FormLabel>
+                                        <FormControl>
+                                          <Textarea 
+                                            placeholder="Describe specific content, activities, or assessments that address this SDG..." 
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
                               ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      variant="destructive"
-                      onClick={() => remove(index)}
-                      className="mt-2"
-                    >
-                      Remove
-                    </Button>
+                              
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => appendSdg({ sdg: "", alignment: "" })}
+                                className="mt-2"
+                              >
+                                Add SDG Alignment
+                              </Button>
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
                   </div>
                 ))}
+                
                 <Button
                   type="button"
-                  onClick={() => append({ moduleName: "", sdg: "" })}
+                  onClick={() => appendModule({ 
+                    moduleCode: "", 
+                    moduleName: "", 
+                    moduleDescription: "", 
+                    sdgAlignments: [{ sdg: "", alignment: "" }] 
+                  })}
+                  className="mt-2"
                 >
                   Add Module
                 </Button>
               </div>
 
-            
-
-              {/* Publications Link */}
-              <FormField
-                control={form.control}
-                name="publications"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Publications (ORCID/Google Scholar)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://orcid.org/..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Publications Links */}
+              <div className="border rounded-lg p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-lg font-semibold">Publications</h3>
+                  <Popover open={openPopover === 'publications'}>
+                    <PopoverTrigger asChild>
+                      <HelpCircle 
+                        className="h-4 w-4 cursor-pointer text-muted-foreground"
+                        onMouseEnter={() => handlePopoverOpen('publications')}
+                        onMouseLeave={handlePopoverClose}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-80"
+                      onMouseEnter={() => handlePopoverOpen('publications')}
+                      onMouseLeave={handlePopoverClose}
+                    >
+                      <p>Enter links to your ORCID, Google Scholar profile, or specific publications. Must be valid URLs. Include the SDG number related to the publication.</p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {publicationFields.map((pubField, pubIndex) => (
+                  <div key={pubField.id} className="flex flex-col md:flex-row gap-2 mb-4">
+                    <div className="flex-grow">
+                      <FormField
+                        control={form.control}
+                        name={`publications.${pubIndex}.url`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="https://orcid.org/0000-0000-0000-0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex-grow">
+                      <FormField
+                        control={form.control}
+                        name={`publications.${pubIndex}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="ORCID Profile / Google Scholar / Publication Title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="flex-grow">
+                      <FormField
+                        control={form.control}
+                        name={`publications.${pubIndex}.sdgNumber`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input placeholder="SDG Number e.g., 7.5" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePublication(pubIndex)}
+                      className="mt-1"
+                    >
+                      <span className="sr-only">Remove</span>
+                      <span className="h-4 w-4">×</span>
+                    </Button>
+                  </div>
+                ))}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => appendPublication({ url: "", description: "", sdgNumber: "" })}
+                  className="mt-2"
+                >
+                  Add Publication
+                </Button>
+              </div>
 
               {/* Submit Button */}
               <div className="flex justify-end space-x-4">
                 <Button type="submit" size="lg">
-                  Continue to Tags
+                  Next: Add Research Tags
                 </Button>
               </div>
             </form>
