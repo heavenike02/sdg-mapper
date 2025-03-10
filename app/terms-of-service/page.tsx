@@ -12,45 +12,89 @@ const TermsOfService: FC = () => {
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-bold">Terms of Service</CardTitle>
           <p className="text-muted-foreground">
-            Last updated: {new Date().toLocaleDateString()}
+            Last updated: {"10 March 2025"}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <h2>1. Acceptance of Terms</h2>
-            <p>
-              By accessing or using the SDG Assessment tool, you agree to be bound by these Terms of Service.
-              If you do not agree to these terms, please do not use this service.
-            </p>
-            
-            <h2>2. Fork and Explicit Use</h2>
-            <p>
-              This tool is provided as an open resource. You are permitted to fork this project and use it 
-              for your own purposes, provided that:
-            </p>
-            <ul>
-              <li>You acknowledge the original source</li>
-              <li>You do not represent the forked version as the original</li>
-              <li>You maintain all original licensing requirements</li>
-            </ul>
-            
-            <h2>3. Data Usage</h2>
-            <p>
-              Information provided during assessments is used to generate SDG mappings and recommendations.
-              We do not share your project details with third parties without your explicit consent.
-            </p>
-            
-            <h2>4. Disclaimer</h2>
-            <p>
-              This tool provides recommendations based on the information you provide. The accuracy and
-              relevance of these recommendations depend on the quality and completeness of your input.
-              We do not guarantee specific outcomes from using this tool.
-            </p>
-            
-            <h2>5. Contact</h2>
-            <p>
-              For questions about these terms, please contact support@sdgassessment.org.
-            </p>
+          <div className="prose prose-sm dark:prose-invert max-w-none space-y-8">            
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Privacy Policy</h2>
+              <p>
+                This Privacy Policy explains how we collect, use, and protect your personal data when you visit our website. 
+                We are committed to ensuring that your privacy is respected and protected in accordance with the General Data Protection Regulation (GDPR).
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Types of Personal Data Collected</h2>
+              <p>We collect the following personal data from you:</p>
+              <ul>
+                <li>First Name</li>
+                <li>Last Name</li>
+                <li>Workplace</li>
+                <li>Email Address</li>
+              </ul>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Purpose and Legal Basis for Processing</h2>
+              <p>
+                We process your personal data for the purpose of creating a showcase site profile on your behalf. 
+                The legal basis for this processing is your consent, which you provide by submitting your information through our website. 
+                You have the right to withdraw your consent at any time by contacting us at the email address provided above.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Data Retention</h2>
+              <p>
+                We will retain your personal data for as long as necessary to fulfill the purpose of creating the showcase site. 
+                Once the site is created and no longer requires your data, we will securely delete it.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Data Sharing</h2>
+              <p>
+                Your personal data will not be shared with any third parties except as necessary for the creation of the showcase site. 
+                If any data sharing is required, we will ensure that appropriate safeguards are in place to protect your data.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">International Data Transfers</h2>
+              <p>
+                We do not anticipate transferring your personal data outside the EU. However, if such a transfer becomes necessary, 
+                we will ensure that it is done in compliance with GDPR requirements, using appropriate safeguards such as Standard Contractual Clauses.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Data Subject Rights</h2>
+              <p>Under the GDPR, you have the following rights:</p>
+              <ul>
+                <li>Right to Access: You can request access to your personal data</li>
+                <li>Right to Rectification: You can request that we correct any inaccuracies in your personal data</li>
+                <li>Right to Erasure: You can request that we delete your personal data</li>
+                <li>Right to Restrict Processing: You can request that we restrict how we process your personal data</li>
+                <li>Right to Object: You can object to the processing of your personal data</li>
+              </ul>
+              <p>To exercise these rights, please contact us at <a href="mailto:W.Ng2@universityofgalway.ie" className="text-blue-600 hover:underline">W.Ng2@universityofgalway.ie</a></p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Changes to This Privacy Policy</h2>
+              <p>
+                We reserve the right to update this Privacy Policy at any time. Changes will be communicated through this webpage.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="font-bold text-xl">Consent</h2>
+              <p>
+                By using our website and submitting your personal data, you consent to the terms outlined in this Privacy Policy.
+              </p>
+            </div>
           </div>
           
           <div className="flex justify-center mt-6">
