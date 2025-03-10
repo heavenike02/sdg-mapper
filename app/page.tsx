@@ -17,16 +17,15 @@ export default function Home() {
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
             <Heart className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold"> SDG Assessment</CardTitle>
+          <CardTitle className="text-3xl font-bold"> Showcase Site Information Collection</CardTitle>
           <p className="text-muted-foreground">
-            Align your projects with Sustainable Development Goals and measure their impact
+            Showcase the impact of your research on SDG goals
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="prose prose-sm dark:prose-invert mx-auto">
             <p className="text-center">
-              Our assessment tool helps you evaluate and align your projects with specific social,
-              economic, and environmental goals through a simple three-step process.
+              Our information collection tool enable us to help you to onboard your personal and research profile onto the SDG showcase site, allowing you to showcase the impact of your research on SDG goals.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3 mt-6">
@@ -34,7 +33,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-lg">1. Project Details</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Enter your project and assessment information
+                  Enter your research information
                 </p>
               </CardHeader>
             </Card>
@@ -86,7 +85,7 @@ export default function Home() {
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={!termsAccepted}
               >
-                Start Assessment
+                Start
               </Button>
             </Link>
           </div>

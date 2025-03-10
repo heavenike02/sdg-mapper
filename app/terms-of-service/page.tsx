@@ -65,7 +65,7 @@ const TermsOfService: FC = () => {
               <h2 className="font-bold text-xl">International Data Transfers</h2>
               <p>
                 We do not anticipate transferring your personal data outside the EU. However, if such a transfer becomes necessary, 
-                we will ensure that it is done in compliance with GDPR requirements, using appropriate safeguards such as Standard Contractual Clauses.
+                we will ensure that it is done in compliance with GDPR requirements.
               </p>
             </div>
 

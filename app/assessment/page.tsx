@@ -159,7 +159,7 @@ export default function AssessmentForm() {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
-            Faculty Profile Submission
+            Researcher Profile Submission
           </CardTitle>
         </CardHeader>
         <CardContent>
