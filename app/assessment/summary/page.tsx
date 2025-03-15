@@ -143,6 +143,14 @@ export default function SummaryPage() {
             </div>
           </div>
           
+          {/* Biography */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Biography</h3>
+            <div className="bg-muted/50 rounded-lg p-4">
+              <p className="whitespace-pre-wrap">{formData.biography}</p>
+            </div>
+          </div>
+          
           {/* Research Objectives */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Research & Objectives</h3>
@@ -194,27 +202,48 @@ export default function SummaryPage() {
           )}
           
           {/* Publications */}
-          {formData.publications && formData.publications.length > 0 && (
+          {(formData.publications?.length > 0 || formData.publicationsOverview) && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Publications</h3>
-              <div className="space-y-2">
-                {formData.publications.map((pub: {
-                  url: string;
-                  description?: string;
-                  sdgNumber: string;
-                }, index: number) => (
-                  <div key={index} className="flex items-center gap-3 border rounded-lg p-3">
-                    <div className="flex-grow">
-                      <a href={pub.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {pub.description || pub.url}
+              
+              {/* Publications Overview */}
+              {formData.publicationsOverview && (
+                <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                  <p className="whitespace-pre-wrap">{formData.publicationsOverview}</p>
+                </div>
+              )}
+
+              {/* Publications List */}
+              {formData.publications?.length > 0 && (
+                <div className="space-y-2">
+                  {formData.publications.map((pub: {
+                    name: string;
+                    link: string;
+                    author: string;
+                    sdg: string;
+                  }, index: number) => (
+                    <div key={index} className="flex flex-col gap-2 border rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{pub.name}</h4>
+                        <span className="text-sm bg-primary/10 px-2 py-1 rounded-full">
+                          SDG {pub.sdg}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        By {pub.author.split('-').map(author => author.trim()).join(' • ')}
+                      </p>
+                      <a 
+                        href={pub.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        View Publication
                       </a>
                     </div>
-                    <div className="text-sm bg-primary/10 px-2 py-1 rounded-full">
-                      SDG {pub.sdgNumber}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

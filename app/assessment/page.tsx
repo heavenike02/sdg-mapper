@@ -23,9 +23,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { useUpload } from '@/lib/hooks/use-upload'
 
 // Define SDG options for the dropdown
 const sdgOptions = [
@@ -62,6 +65,7 @@ const titleOptions = [
 
 // Cleaned Zod schema with only the used fields
 const formSchema = z.object({
+  profilePicture: z.string().optional(),
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -70,7 +74,19 @@ const formSchema = z.object({
     .string()
     .min(2, "University school must be at least 2 characters"),
   title: z.string().min(2, "Title is required"),
+  biography: z.string().min(100, "Biography must be at least 100 characters"),
   objectives: z.string().min(20, "Objectives must be at least 20 characters"),
+  // Publications overview - single field for all publications
+  publicationsOverview: z.string().optional(),
+  // Publications array
+  publications: z.array(
+    z.object({
+      name: z.string().min(2, "Publication name must be at least 2 characters"),
+      link: z.string().url("Must be a valid URL"),
+      author: z.string().min(2, "Author names must be at least 2 characters"),
+      sdg: z.string().min(1, "SDG selection is required"),
+    })
+  ).optional(),
   // Field for listing modules and their SDG focus
   modules: z
     .array(
@@ -93,15 +109,6 @@ const formSchema = z.object({
       })
     )
     .optional(),
-  
-  // Publications links (ORCID/Google Scholar) with URL validation
-  publications: z.array(
-    z.object({
-      url: z.string().url("Must be a valid URL"),
-      description: z.string().optional(),
-      sdgNumber: z.string().regex(/^\d+(\.\d+)?$/, "Must be a valid SDG number"),
-    })
-  ).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -109,6 +116,9 @@ type FormValues = z.infer<typeof formSchema>;
 export default function AssessmentForm() {
   const router = useRouter();
   const [openPopover, setOpenPopover] = useState<string | null>(null);
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { upload, isUploading, error: uploadError } = useUpload();
 
   const handlePopoverOpen = (id: string) => {
     setOpenPopover(id);
@@ -121,14 +131,17 @@ export default function AssessmentForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      profilePicture: "",
       firstName: "",
       lastName: "",
       email: "",
       university: "",
       universitySchool: "",
       title: "",
+      biography: "",
       objectives: "",
       modules: [],
+      publicationsOverview: "",
       publications: [],
     },
   });
@@ -145,13 +158,30 @@ export default function AssessmentForm() {
     name: "publications",
   });
 
-  function onSubmit(values: FormValues) {
-    console.log(values);
-    // Pass form data to the tags page instead of summary
-    const query = new URLSearchParams({
-      formData: JSON.stringify(values),
-    }).toString();
-    router.push(`/assessment/tags?${query}`); // Updated to navigate to tags page
+  async function onSubmit(values: FormValues) {
+    try {
+      setIsSubmitting(true);
+      
+      // Upload profile picture if selected
+      if (profilePictureFile) {
+        const result = await upload(profilePictureFile);
+        if (result?.url) {
+          values.profilePicture = result.url;
+        }
+      }
+
+      console.log(values);
+      // Pass form data to the tags page
+      const query = new URLSearchParams({
+        formData: JSON.stringify(values),
+      }).toString();
+      router.push(`/assessment/tags?${query}`);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("There was an error submitting the form. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -164,106 +194,153 @@ export default function AssessmentForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Personal Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Profile Picture and Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-[240px,1fr] gap-8 items-start border rounded-lg p-6">
+                {/* Profile Picture */}
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="profilePicture"
                   render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Your First Name</FormLabel>
-                        <Popover open={openPopover === 'firstName'}>
-                          <PopoverTrigger asChild>
-                            <HelpCircle 
-                              className="h-4 w-4 cursor-pointer text-muted-foreground"
-                              onMouseEnter={() => handlePopoverOpen('firstName')}
-                              onMouseLeave={handlePopoverClose}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent 
-                            className="w-80"
-                            onMouseEnter={() => handlePopoverOpen('firstName')}
-                            onMouseLeave={handlePopoverClose}
-                          >
-                            <p>Enter your full legal name as you'd like it to appear on your profile.</p>
-                          </PopoverContent>
-                        </Popover>
+                    <FormItem className="space-y-0">
+                      <div className="flex flex-col items-center">
+                        <FormLabel className="mb-6 text-center text-sm font-medium">Profile Picture</FormLabel>
+                        <FormControl>
+                          <ProfilePictureUpload
+                            defaultImage={field.value}
+                            onFileChange={setProfilePictureFile}
+                          />
+                        </FormControl>
+                        {uploadError && (
+                          <p className="text-xs text-destructive mt-2">{uploadError}</p>
+                        )}
+                        <FormMessage />
                       </div>
-                      <FormControl>
-                        <Input placeholder="John" {...field} />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel>Your Last Name</FormLabel>
-                        <Popover open={openPopover === 'lastName'}>
-                          <PopoverTrigger asChild>
-                            <HelpCircle 
-                              className="h-4 w-4 cursor-pointer text-muted-foreground"
-                              onMouseEnter={() => handlePopoverOpen('lastName')}
+
+                {/* Basic Info */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold">Personal Information</h3>
+                    <Popover open={openPopover === 'personalInfo'}>
+                      <PopoverTrigger asChild>
+                        <HelpCircle 
+                          className="h-4 w-4 cursor-pointer text-muted-foreground"
+                          onMouseEnter={() => handlePopoverOpen('personalInfo')}
+                          onMouseLeave={handlePopoverClose}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent 
+                        className="w-80"
+                        onMouseEnter={() => handlePopoverOpen('personalInfo')}
+                        onMouseLeave={handlePopoverClose}
+                      >
+                        <p>Please provide your basic contact information as you'd like it to appear on your profile.</p>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Your First Name</FormLabel>
+                            <Popover open={openPopover === 'firstName'}>
+                              <PopoverTrigger asChild>
+                                <HelpCircle 
+                                  className="h-4 w-4 cursor-pointer text-muted-foreground"
+                                  onMouseEnter={() => handlePopoverOpen('firstName')}
+                                  onMouseLeave={handlePopoverClose}
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent 
+                                className="w-80"
+                                onMouseEnter={() => handlePopoverOpen('firstName')}
+                                onMouseLeave={handlePopoverClose}
+                              >
+                                <p>Enter your full legal name as you'd like it to appear on your profile.</p>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <FormControl>
+                            <Input placeholder="John" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormLabel>Your Last Name</FormLabel>
+                            <Popover open={openPopover === 'lastName'}>
+                              <PopoverTrigger asChild>
+                                <HelpCircle 
+                                  className="h-4 w-4 cursor-pointer text-muted-foreground"
+                                  onMouseEnter={() => handlePopoverOpen('lastName')}
+                                  onMouseLeave={handlePopoverClose}
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent 
+                                className="w-80"
+                                onMouseEnter={() => handlePopoverOpen('lastName')}
+                                onMouseLeave={handlePopoverClose}
+                              >
+                                <p>Enter your last name as you'd like it to appear on your profile.</p>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <FormControl>
+                            <Input placeholder="Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Your Contact Email</FormLabel>
+                          <Popover open={openPopover === 'email'}>
+                            <PopoverTrigger asChild>
+                              <HelpCircle 
+                                className="h-4 w-4 cursor-pointer text-muted-foreground"
+                                onMouseEnter={() => handlePopoverOpen('email')}
+                                onMouseLeave={handlePopoverClose}
+                              />
+                            </PopoverTrigger>
+                            <PopoverContent 
+                              className="w-80"
+                              onMouseEnter={() => handlePopoverOpen('email')}
                               onMouseLeave={handlePopoverClose}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent 
-                            className="w-80"
-                            onMouseEnter={() => handlePopoverOpen('lastName')}
-                            onMouseLeave={handlePopoverClose}
-                          >
-                            <p>Enter your last name as you'd like it to appear on your profile.</p>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                            >
+                              <p>Enter the email address where you can be contacted regarding academic matters.</p>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <FormControl>
+                          <Input placeholder="john.doe@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              {/* Contact & University Info */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormLabel>Your Contact Email</FormLabel>
-                      <Popover open={openPopover === 'email'}>
-                        <PopoverTrigger asChild>
-                          <HelpCircle 
-                            className="h-4 w-4 cursor-pointer text-muted-foreground"
-                            onMouseEnter={() => handlePopoverOpen('email')}
-                            onMouseLeave={handlePopoverClose}
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent 
-                          className="w-80"
-                          onMouseEnter={() => handlePopoverOpen('email')}
-                          onMouseLeave={handlePopoverClose}
-                        >
-                          <p>Enter the email address where you can be contacted regarding academic matters.</p>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <FormControl>
-                      <Input placeholder="john.doe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* University Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -375,6 +452,47 @@ export default function AssessmentForm() {
                   </FormItem>
                 )}
               />
+
+              {/* Biography */}
+              <div className="border rounded-lg p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-lg font-semibold">Biography</h3>
+                  <Popover open={openPopover === 'biography'}>
+                    <PopoverTrigger asChild>
+                      <HelpCircle 
+                        className="h-4 w-4 cursor-pointer text-muted-foreground"
+                        onMouseEnter={() => handlePopoverOpen('biography')}
+                        onMouseLeave={handlePopoverClose}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-80"
+                      onMouseEnter={() => handlePopoverOpen('biography')}
+                      onMouseLeave={handlePopoverClose}
+                    >
+                      <p>Write a professional biography in third person that describes your academic background, research interests, and achievements.</p>
+                      <p className="text-sm text-muted-foreground mt-2">Example: "Dr. Jane Smith is a Professor of Environmental Science at..."</p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="biography"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Write your professional biography in third person..."
+                          className="min-h-[200px] resize-y"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {/* Aims and Objectives */}
               <FormField
@@ -588,7 +706,7 @@ export default function AssessmentForm() {
                 </Button>
               </div>
 
-              {/* Publications Links */}
+              {/* Publications Section */}
               <div className="border rounded-lg p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <h3 className="text-lg font-semibold">Publications</h3>
@@ -605,82 +723,165 @@ export default function AssessmentForm() {
                       onMouseEnter={() => handlePopoverOpen('publications')}
                       onMouseLeave={handlePopoverClose}
                     >
-                      <p>Enter links to your ORCID, Google Scholar profile, or specific publications. Must be valid URLs. Include the SDG number related to the publication.</p>
+                      <p>Enter your publications overview and individual publication details.</p>
                     </PopoverContent>
                   </Popover>
                 </div>
-                
-                {publicationFields.map((pubField, pubIndex) => (
-                  <div key={pubField.id} className="flex flex-col md:flex-row gap-2 mb-4">
-                    <div className="flex-grow">
-                      <FormField
-                        control={form.control}
-                        name={`publications.${pubIndex}.url`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input placeholder="https://orcid.org/0000-0000-0000-0000" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
+                {/* Publications Overview */}
+                <div className="mb-6">
+                  <FormField
+                    control={form.control}
+                    name="publicationsOverview"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Publications Overview</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <HelpCircle className="h-4 w-4 cursor-pointer text-muted-foreground" />
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <p>Provide a general overview of your publications and research focus. This text will appear on your profile before the list of publications.</p>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Describe your overall publication work and research focus..."
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Individual Publications */}
+                <div className="space-y-6">
+                  <h4 className="font-medium text-sm text-muted-foreground">Individual Publications</h4>
+                  
+                  {publicationFields.map((pubField, pubIndex) => (
+                    <div key={pubField.id} className="flex flex-col gap-2 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`publications.${pubIndex}.name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Publication Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter publication name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`publications.${pubIndex}.link`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Publication Link</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name={`publications.${pubIndex}.author`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center gap-2">
+                                <FormLabel>Authors</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <HelpCircle className="h-4 w-4 cursor-pointer text-muted-foreground" />
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
+                                    <p>For multiple authors, separate names with a dash (-)</p>
+                                    <p className="text-sm text-muted-foreground mt-1">Example: John Doe - Jane Smith - Alex Johnson</p>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                              <FormControl>
+                                <Input placeholder="Enter author names (separate with -)" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`publications.${pubIndex}.sdg`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>SDG</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select an SDG" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {sdgOptions.map((sdg, index) => (
+                                    <SelectItem key={index + 1} value={String(index + 1)}>
+                                      {`SDG ${index + 1}: ${sdg}`}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePublication(pubIndex)}
+                        className="self-end"
+                      >
+                        Remove Publication
+                      </Button>
+                      <Separator className="my-2" />
                     </div>
-                    <div className="flex-grow">
-                      <FormField
-                        control={form.control}
-                        name={`publications.${pubIndex}.description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input placeholder="ORCID Profile / Google Scholar / Publication Title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <FormField
-                        control={form.control}
-                        name={`publications.${pubIndex}.sdgNumber`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input placeholder="SDG Number e.g., 7.5" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePublication(pubIndex)}
-                      className="mt-1"
-                    >
-                      <span className="sr-only">Remove</span>
-                      <span className="h-4 w-4">×</span>
-                    </Button>
-                  </div>
-                ))}
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => appendPublication({ url: "", description: "", sdgNumber: "" })}
-                  className="mt-2"
-                >
-                  Add Publication
-                </Button>
+                  ))}
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => appendPublication({ name: "", link: "", author: "", sdg: "" })}
+                    className="mt-2"
+                  >
+                    Add Publication
+                  </Button>
+                </div>
               </div>
 
               {/* Submit Button */}
               <div className="flex justify-end space-x-4">
-                <Button type="submit" size="lg">
-                  Next: Add Research Tags
+                <Button 
+                  type="submit" 
+                  size="lg"
+                  disabled={isSubmitting || isUploading}
+                >
+                  {isSubmitting || isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Next: Add Research Tags"
+                  )}
                 </Button>
               </div>
             </form>
