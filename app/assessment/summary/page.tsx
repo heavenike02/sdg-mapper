@@ -35,7 +35,8 @@ export default function SummaryPage() {
         tags: selectedTags,
         targets: Array.from(enabledTargets).map((targetId) => ({
           targetId,
-          ...targetImpacts[targetId],
+          impactType: targetImpacts[targetId]?.impactType || 'positive',
+          impactDirection: targetImpacts[targetId]?.impactDirection || 'direct',
         })),
         // Add additional fields required by saveAssessment
         firstName: formData.firstName,

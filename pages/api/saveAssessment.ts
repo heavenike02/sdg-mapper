@@ -5,12 +5,19 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Log the HTTP method and request path
+  console.log('API Request:', req.method, req.url);
+
   if (req.method === "POST") {
     try {
       const assessmentData = req.body;
       
+      // Log the incoming request body
+      console.log('Incoming assessmentData:', JSON.stringify(assessmentData, null, 2));
+
       // Validate the request body
       if (!assessmentData) {
+        console.error('Request body is missing');
         return res.status(400).json({ error: "Missing request body" });
       }
 
@@ -19,6 +26,7 @@ export default async function handler(
       const missingFields = requiredFields.filter(field => !assessmentData[field]);
       
       if (missingFields.length > 0) {
+        console.error('Missing required fields:', missingFields);
         return res.status(400).json({ 
           error: `Missing required fields: ${missingFields.join(', ')}` 
         });
@@ -26,6 +34,7 @@ export default async function handler(
 
       // Validate targets structure
       if (!Array.isArray(assessmentData.targets)) {
+        console.error('Targets is not an array:', assessmentData.targets);
         return res.status(400).json({ 
           error: "Targets must be an array" 
         });
@@ -33,6 +42,7 @@ export default async function handler(
 
       for (const target of assessmentData.targets) {
         if (!target.targetId || !target.impactType || !target.impactDirection) {
+          console.error('Invalid target structure:', target);
           return res.status(400).json({ 
             error: `Invalid target structure: ${JSON.stringify(target)}` 
           });

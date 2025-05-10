@@ -35,7 +35,9 @@ export async function saveAssessment(assessmentData: {
     author: string;
     sdg: string;
   }[];
-}) {
+}): Promise<any> {
+  // Log the incoming data
+  console.log('saveAssessment called with:', JSON.stringify(assessmentData, null, 2));
   try {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
@@ -46,13 +48,18 @@ export async function saveAssessment(assessmentData: {
 
     // Validate required fields
     if (!assessmentData.firstName || !assessmentData.lastName || !assessmentData.email) {
+      console.error('Missing required fields in saveAssessment:', {
+        firstName: assessmentData.firstName,
+        lastName: assessmentData.lastName,
+        email: assessmentData.email
+      });
       throw new Error("Missing required fields");
     }
 
     // Ensure targets are properly formatted
     const formattedTargets = assessmentData.targets.map(target => {
       if (!target.targetId || !target.impactType || !target.impactDirection) {
-        console.error('Invalid target:', target);
+        console.error('Invalid target in saveAssessment:', target);
         throw new Error(`Invalid target data structure: ${JSON.stringify(target)}`);
       }
       return {
@@ -110,7 +117,7 @@ export async function saveAssessment(assessmentData: {
   } catch (error) {
     // Log the error details
     console.error('Error saving assessment:', error);
-    console.error('Assessment data:', JSON.stringify(assessmentData, null, 2));
+    console.error('Assessment data (on error):', JSON.stringify(assessmentData, null, 2));
     
     // Rethrow with a more specific message
     throw new Error(`Failed to save assessment: ${error instanceof Error ? error.message : 'Unknown error'}`);
